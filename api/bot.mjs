@@ -26,6 +26,23 @@ Do you want to continue? [Y/n]`,
   "ls": "Documents  Downloads  Music  Pictures  Videos"
 };
 
+const lastCommand = new Map();
+
+bot.on("message", (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text.trim();
+
+  if (lastCommand.get(chatId) === "sudo apt upgrade" && text.toLowerCase() === "y") {
+    bot.sendMessage(chatId, "All packages are up to date.");
+    lastCommand.delete(chatId);
+    return;
+  }
+
+  if (responses[text]) {
+    bot.sendMessage(chatId, responses[text]);
+    lastCommand.set(chatId, text);
+  }
+
 export default async function handler(req, res) {
   if (req.method === "POST") {
     const { message } = req.body;
@@ -36,4 +53,5 @@ export default async function handler(req, res) {
   } else {
     res.status(405).send("Method Not Allowed");
   }
-      }
+}
+});
