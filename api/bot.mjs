@@ -1,9 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;  // Use environment variables for security
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(TOKEN);
 
-// Predefined responses
 const responses = {
   "sudo apt update": "apt updated",
   "uname -m": "aarch64",
