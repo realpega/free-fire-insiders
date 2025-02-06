@@ -4,15 +4,14 @@ const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(TOKEN);
 
 const responses = {
-  "sudo apt update": "Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease  
-Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]  
-Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]  
-Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [108 kB]  
-Reading package lists... Done  
-Building dependency tree       
-Reading state information... Done  
-All packages are up to date.  
-  ",
+  "sudo apt update": `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease\n 
+    Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]\n
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]\n
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [108 kB]\n
+Reading package lists... Done\n
+Building dependency tree\n
+Reading state information... Done\n
+All packages are up to date.`,
   "uname -m": "aarch64",
   "ls": "Documents  Downloads  Music  Pictures  Videos",
 };
