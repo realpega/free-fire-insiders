@@ -42,6 +42,7 @@ bot.on("message", (msg) => {
     bot.sendMessage(chatId, responses[text]);
     lastCommand.set(chatId, text);
   }
+});
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -54,4 +55,3 @@ export default async function handler(req, res) {
     res.status(405).send("Method Not Allowed");
   }
 }
-});
