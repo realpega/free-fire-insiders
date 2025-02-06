@@ -12,7 +12,16 @@ Reading package lists... Done
 Building dependency tree
 Reading state information... Done
 All packages are up to date.`,
-  
+  "sudo apt upgrade": `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+Calculating upgrade... Done  
+The following packages will be upgraded:  
+  libc-bin libc6  
+2 upgraded, 0 newly installed, 0 to remove, and 0 not upgraded.  
+Need to get 5,632 kB of archives.  
+After this operation, 1,024 KB of additional disk space will be used.  
+Do you want to continue? [Y/n]`,
   "uname -m": "aarch64",
   "ls": "Documents  Downloads  Music  Pictures  Videos"
 };
