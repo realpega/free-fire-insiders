@@ -24,7 +24,7 @@ Need to get 5,632 kB of archives.
 After this operation, 1,024 KB of additional disk space will be used.  
 Do you want to continue? [Y/n]`,
   
-  "uname -m": "aarch64",
+  "uname -m": "amd64",
   "ls": "Documents  Downloads  Music  Pictures  Videos"
 };
 
