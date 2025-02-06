@@ -1,0 +1,20 @@
+{
+  "name": "free-fire-insiders",
+  "version": "1.0.0",
+  "description": "A Telegram bot that replies with predefined messages in groups.",
+  "main": "api/bot.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node api/bot.mjs",
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.61.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Sounava Bhowmick",
+  "license": "MIT"
+}
