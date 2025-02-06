@@ -36,8 +36,6 @@ Setting up libc-bin (2.31-0ubuntu9.9) ...
 Processing triggers for man-db (2.9.1-1) ...`
       );
       packagesUpgraded = true;
-    } else {
-      await bot.sendMessage(chatId, "All packages are up to date.");
     }
     lastCommand.delete(chatId);
     return;
