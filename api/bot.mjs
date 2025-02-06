@@ -41,6 +41,21 @@ Processing triggers for man-db (2.9.1-1) ...`
     return;
   }
 
+  if (text === "apt list --upgradable") {
+    if (!packagesUpgraded) {
+      await bot.sendMessage(
+        chatId,
+        `Listing... Done
+libc-bin/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]
+libc6/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]`
+      );
+    } else {
+      await bot.sendMessage(chatId, "Listing... Done");
+    }
+    lastCommand.set(chatId, text);
+    return;
+  }
+
   if (text === "sudo apt update") {
     const updateOutput = packagesUpgraded
       ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
