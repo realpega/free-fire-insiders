@@ -15,7 +15,7 @@ async function processMessage(message) {
     messageHistory.set(chatId, []);
   }
   if (text === "clear") {
-    try { await bot.deleteMessage(chatId, message.message_id); } catch (error) {}
+    try { await bot.deleteMessage(chatId, message.message_id); } catch (e) {}
     await clearChat(chatId);
     return;
   }
@@ -38,40 +38,32 @@ Processing triggers for man-db (2.9.1-1) ...`
       );
       messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
       packagesUpgraded = true;
-    } else {
-      const replyMessage = await bot.sendMessage(chatId, "All packages are up to date.");
-      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     }
     lastCommand.delete(chatId);
     return;
   }
   if (text === "apt list --upgradable") {
-    let replyText;
-    if (!packagesUpgraded) {
-      replyText = `Listing... Done
+    let replyText = !packagesUpgraded
+      ? `Listing... Done
 libc-bin/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]
-libc6/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]`;
-    } else {
-      replyText = "Listing... Done";
-    }
+libc6/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]`
+      : "Listing... Done";
     const replyMessage = await bot.sendMessage(chatId, replyText);
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     lastCommand.set(chatId, text);
     return;
   }
   if (text === "sudo apt update") {
-    let updateOutput;
-    if (packagesUpgraded) {
-      updateOutput = `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+    let updateOutput = packagesUpgraded
+      ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
 Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
 Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
 Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
 Reading package lists... Done
 Building dependency tree
 Reading state information... Done
-All packages are up to date.`;
-    } else {
-      updateOutput = `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+All packages are up to date.`
+      : `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
 Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
 Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
 Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
@@ -79,21 +71,18 @@ Reading package lists... Done
 Building dependency tree
 Reading state information... Done
 2 packages can be upgraded. Run 'apt list --upgradable' to see them.`;
-    }
     const replyMessage = await bot.sendMessage(chatId, updateOutput);
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     lastCommand.set(chatId, text);
     return;
   }
   if (text === "sudo apt upgrade") {
-    let upgradeOutput;
-    if (packagesUpgraded) {
-      upgradeOutput = `Reading package lists... Done  
+    let upgradeOutput = packagesUpgraded
+      ? `Reading package lists... Done  
 Building dependency tree       
 Reading state information... Done  
-All packages are up to date.`;
-    } else {
-      upgradeOutput = `Reading package lists... Done  
+All packages are up to date.`
+      : `Reading package lists... Done  
 Building dependency tree       
 Reading state information... Done  
 Calculating upgrade... Done  
@@ -103,7 +92,6 @@ The following packages will be upgraded:
 Need to get 5,632 kB of archives.  
 After this operation, 1,024 KB of additional disk space will be used.  
 Do you want to continue? [Y/n]`;
-    }
     const replyMessage = await bot.sendMessage(chatId, upgradeOutput);
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     lastCommand.set(chatId, text);
@@ -120,8 +108,8 @@ async function clearChat(chatId) {
   if (!messageHistory.has(chatId)) return;
   const history = messageHistory.get(chatId);
   for (const pair of history) {
-    try { await bot.deleteMessage(chatId, pair.bot); } catch (error) {}
-    try { await bot.deleteMessage(chatId, pair.user); } catch (error) {}
+    try { await bot.deleteMessage(chatId, pair.bot); } catch (e) {}
+    try { await bot.deleteMessage(chatId, pair.user); } catch (e) {}
   }
   messageHistory.set(chatId, []);
 }
