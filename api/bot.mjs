@@ -105,7 +105,7 @@ Do you want to continue? [Y/n]`;
   }
 
   if (text === "neofetch") {
-    const imageUrl = "neofetch.jpeg";
+    const imageUrl = "neofetch.png";
     const photoMessage = await bot.sendPhoto(chatId, imageUrl);
     const neofetchText = `sounava@ubuntu20:~$ neofetch
 
