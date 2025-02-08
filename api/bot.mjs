@@ -5,7 +5,6 @@ let packagesUpgraded = false;
 const staticResponses = {
   "uname -m": "amd64",
   "ls": "Documents  Downloads  Music  Pictures  Videos"
-  // Removed "neofetch" from here so we can handle it separately.
 };
 const lastCommand = new Map();
 const messageHistory = new Map();
@@ -105,9 +104,8 @@ Do you want to continue? [Y/n]`;
     return;
   }
 
-  // --- Added neofetch command block ---
   if (text === "neofetch") {
-    const imageUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQaThXjYnWW9Fch2inORQQUmCSJPuxl_mw7OKPkI93W68XYUgx2tAE_e2k&s=10"; // Replace with your actual image URL or file path
+    const imageUrl = "neofetch.jpeg";
     const photoMessage = await bot.sendPhoto(chatId, imageUrl);
     const neofetchText = `sounava@ubuntu20:~$ neofetch
 
@@ -138,7 +136,6 @@ sounava@ubuntu20:~$`;
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     return;
   }
-  // --- End neofetch block ---
 
   if (staticResponses[text]) {
     const replyMessage = await bot.sendMessage(chatId, staticResponses[text]);
