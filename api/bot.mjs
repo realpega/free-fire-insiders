@@ -105,7 +105,7 @@ Do you want to continue? [Y/n]`;
   }
 
   if (text === "neofetch") {
-    const imageUrl = "neofetch.png";
+    const imageUrl = "https://raw.githubusercontent.com/realpega/free-fire-insiders/refs/heads/main/api/neofetch.jpeg";
     const photoMessage = await bot.sendPhoto(chatId, imageUrl);
     const neofetchText = `sounava@ubuntu20:~$ neofetch
 
