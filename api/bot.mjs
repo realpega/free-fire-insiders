@@ -107,7 +107,7 @@ Do you want to continue? [Y/n]`;
 
   // --- Added neofetch command block ---
   if (text === "neofetch") {
-    const imageUrl = "./neofetch.jpeg"; // Replace with your actual image URL or file path
+    const imageUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQaThXjYnWW9Fch2inORQQUmCSJPuxl_mw7OKPkI93W68XYUgx2tAE_e2k&s=10"; // Replace with your actual image URL or file path
     const photoMessage = await bot.sendPhoto(chatId, imageUrl);
     const neofetchText = `sounava@ubuntu20:~$ neofetch
 
