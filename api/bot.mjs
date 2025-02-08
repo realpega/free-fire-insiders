@@ -107,11 +107,7 @@ Do you want to continue? [Y/n]`;
   if (text === "neofetch") {
     const imageUrl = "https://raw.githubusercontent.com/realpega/free-fire-insiders/refs/heads/main/api/neofetch.jpeg";
     const photoMessage = await bot.sendPhoto(chatId, imageUrl);
-    const neofetchText = `sounava@ubuntu20:~$ neofetch
-
-          
-
-sounava@ubuntu20 
+    const neofetchText = `root@freefireinsiders
 ---------------- 
 OS: Ubuntu 20.04.6 LTS x86_64  
 Host: HP Pavilion Gaming Laptop 15-ec2150AX  
@@ -165,6 +161,4 @@ export default async function handler(req, res) {
   } else {
     return res.status(405).send("Method Not Allowed");
   }
-  }
-  
-//hi
+}
