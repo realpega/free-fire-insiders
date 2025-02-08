@@ -124,9 +124,7 @@ Icons: Yaru [GTK2/3]
 Terminal: gnome-terminal  
 CPU: AMD Ryzen 5 5600H (12) @ 4.20GHz  
 GPU: NVIDIA GeForce GTX 1650 Mobile / AMD Radeon Vega 7  
-Memory: 7.8GiB / 15.5GiB  
-
-sounava@ubuntu20:~$`;
+Memory: 7.8GiB / 15.5GiB`;
     const replyMessage = await bot.sendMessage(chatId, neofetchText);
     messageHistory.get(chatId).push({ user: message.message_id, bot: photoMessage.message_id });
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
