@@ -98,7 +98,7 @@ Do you want to continue? [Y/n]`;
     return;
   }
     if (text === "neofetch") {
-    const imageUrl = "https://your-image-url.com/neofetch.png"; // Replace with your actual image URL or file path
+    const imageUrl = "./neofetch.jpeg"; // Replace with your actual image URL or file path
     const photoMessage = await bot.sendPhoto(chatId, imageUrl);
     const neofetchText = `sounava@ubuntu20:~$ neofetch
 sounava@ubuntu20 
