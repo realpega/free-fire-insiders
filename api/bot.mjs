@@ -101,28 +101,6 @@ Do you want to continue? [Y/n]`;
     const imageUrl = "https://your-image-url.com/neofetch.png"; // Replace with your actual image URL or file path
     const photoMessage = await bot.sendPhoto(chatId, imageUrl);
     const neofetchText = `sounava@ubuntu20:~$ neofetch
-
-            .-/+oossssoo+/-.               
-        \`:+ssssssssssssssssss+:`           
-      -+ssssssssssssssssssyyssss+-         
-    .ossssssssssssssssssdMMMNysssso.       
-   /ssssssssssshdmmNNmmyNMMMMhssssss/      
-  +ssssssssshmydMMMMMMMNddddyssssssss+     
- /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/    
-.ssssssssdMMMNhsssssssssshNMMMdssssssss.   
-+sssshhhyNMMNyssssssssssssyNMMMysssssss+   
-ossyNMMMNyMMhsssssssssssssshmmmhssssssso   
-ossyNMMMNyMMhsssssssssssssshmmmhssssssso   
-+sssshhhyNMMNyssssssssssssyNMMMysssssss+   
-.ssssssssdMMMNhsssssssssshNMMMdssssssss.   
- /sssssssshNMMMyhhyyyyhdNMMMNhssssssss/    
-  +ssssssssshmmNNMMMNNmmdhyyyyssssssss+     
-   /sssssssssshdmmNNmmyNMMMMhssssss/      
-    .ossssssssssssssssdMMMNysssso.       
-      -+ssssssssssssssssssyyssss+-         
-        \`:+ssssssssssssssssss+:`           
-            .-/+oossssoo+/-.               
-
 sounava@ubuntu20 
 ---------------- 
 OS: Ubuntu 20.04.6 LTS x86_64  
