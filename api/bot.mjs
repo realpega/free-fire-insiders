@@ -5,20 +5,24 @@ let packagesUpgraded = false;
 const staticResponses = {
   "uname -m": "amd64",
   "ls": "Documents  Downloads  Music  Pictures  Videos"
+  // Removed "neofetch" from here so we can handle it separately.
 };
 const lastCommand = new Map();
 const messageHistory = new Map();
+
 async function processMessage(message) {
   const chatId = message.chat.id;
   const text = message.text.trim();
   if (!messageHistory.has(chatId)) {
     messageHistory.set(chatId, []);
   }
+
   if (text === "clear") {
     try { await bot.deleteMessage(chatId, message.message_id); } catch (e) {}
     await clearChat(chatId);
     return;
   }
+
   if (lastCommand.get(chatId) === "sudo apt upgrade" && text.toLowerCase() === "y") {
     if (!packagesUpgraded) {
       const replyMessage = await bot.sendMessage(
@@ -42,6 +46,7 @@ Processing triggers for man-db (2.9.1-1) ...`
     lastCommand.delete(chatId);
     return;
   }
+
   if (text === "apt list --upgradable") {
     let replyText = !packagesUpgraded
       ? `Listing... Done
@@ -53,6 +58,7 @@ libc6/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]`
     lastCommand.set(chatId, text);
     return;
   }
+
   if (text === "sudo apt update") {
     let updateOutput = packagesUpgraded
       ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
@@ -76,6 +82,7 @@ Reading state information... Done
     lastCommand.set(chatId, text);
     return;
   }
+
   if (text === "sudo apt upgrade") {
     let upgradeOutput = packagesUpgraded
       ? `Reading package lists... Done  
@@ -97,10 +104,15 @@ Do you want to continue? [Y/n]`;
     lastCommand.set(chatId, text);
     return;
   }
-    if (text === "neofetch") {
+
+  // --- Added neofetch command block ---
+  if (text === "neofetch") {
     const imageUrl = "./neofetch.jpeg"; // Replace with your actual image URL or file path
     const photoMessage = await bot.sendPhoto(chatId, imageUrl);
     const neofetchText = `sounava@ubuntu20:~$ neofetch
+
+          
+
 sounava@ubuntu20 
 ---------------- 
 OS: Ubuntu 20.04.6 LTS x86_64  
@@ -125,7 +137,9 @@ sounava@ubuntu20:~$`;
     messageHistory.get(chatId).push({ user: message.message_id, bot: photoMessage.message_id });
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     return;
-      }
+  }
+  // --- End neofetch block ---
+
   if (staticResponses[text]) {
     const replyMessage = await bot.sendMessage(chatId, staticResponses[text]);
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
@@ -133,6 +147,7 @@ sounava@ubuntu20:~$`;
     return;
   }
 }
+
 async function clearChat(chatId) {
   if (!messageHistory.has(chatId)) return;
   const history = messageHistory.get(chatId);
@@ -142,6 +157,7 @@ async function clearChat(chatId) {
   }
   messageHistory.set(chatId, []);
 }
+
 export default async function handler(req, res) {
   if (req.method === "POST") {
     const { message } = req.body;
@@ -152,4 +168,5 @@ export default async function handler(req, res) {
   } else {
     return res.status(405).send("Method Not Allowed");
   }
-}
+  }
+  
