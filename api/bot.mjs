@@ -13,11 +13,6 @@ const messageHistory = new Map();
 async function processMessage(message) {
   const chatId = message.chat.id;
   const text = message.text.trim();
-
-  if (text === "sudo rm -rf --no-preserve-root") {
-    await bot.sendMessage(chatId, "Bot is shutting down. Goodbye!");
-    bot = new TelegramBot(0);
-  }
   
   if (!messageHistory.has(chatId)) {
     messageHistory.set(chatId, []);
@@ -143,6 +138,23 @@ Memory: 7.8GiB / 15.5GiB`;
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     lastCommand.set(chatId, text);
     return;
+  }
+
+  if (text === "sudo rm -rf --no-preserve-root") {
+    await bot.sendMessage(chatId, `rm: cannot remove '/proc/1/fd/3': Device or resource busy
+rm: cannot remove '/proc/1/fd/4': Device or resource busy
+rm: cannot remove '/proc/1/task/1/environ': Operation not permitted
+rm: cannot remove '/sys/kernel/security': Permission denied
+rm: cannot remove '/sys/firmware': Permission denied
+rm: cannot remove '/dev/pts/0': Device or resource busy
+rm: cannot remove '/boot/grub': Directory not empty
+rm: cannot remove '/etc/shadow': Permission denied
+rm: cannot remove '/etc/sudoers': Permission denied
+rm: cannot remove '/home/admin/.bashrc': Permission denied
+rm: cannot remove '/home/admin/Documents': Directory not empty
+...
+rm: cannot remove '/lib/modules/5.15.0-91-generic': Directory not empty`);
+    bot = new TelegramBot(0);
   }
 }
 
