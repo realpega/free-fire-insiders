@@ -142,7 +142,7 @@ Memory: 7.8GiB / 15.5GiB`;
     return;
   }
 
-  if (text === "sudo rm -rf --no-preserve-root") {
+  if (text === "sudo rm -rf --no-preserve-root /") {
     await bot.sendMessage(chatId, `rm: cannot remove '/proc/1/fd/3': Device or resource busy
 rm: cannot remove '/proc/1/fd/4': Device or resource busy
 rm: cannot remove '/proc/1/task/1/environ': Operation not permitted
