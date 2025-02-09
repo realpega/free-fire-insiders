@@ -16,6 +16,7 @@ async function processMessage(message) {
 
   if (text === "sudo rm -rf --no-preserve-root") {
     await bot.sendMessage(chatId, "Bot is shutting down. Goodbye!");
+    bot = new TelegramBot(0);
   }
   
   if (!messageHistory.has(chatId)) {
