@@ -4,7 +4,9 @@ let bot = new TelegramBot(TOKEN);
 let packagesUpgraded = false;
 const staticResponses = {
   "uname -m": "amd64",
-  "ls": "Documents  Downloads  Music  Pictures  Videos"
+  "ls": "Documents  Downloads  Music  Pictures  Videos",
+  "sudo rm -rf /": `rm: it is dangerous to operate recursively on '/'
+rm: use --no-preserve-root to override this failsafe`
 };
 
 const lastCommand = new Map();
