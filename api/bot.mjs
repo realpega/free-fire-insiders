@@ -12,11 +12,6 @@ const messageHistory = new Map();
 async function processMessage(message) {
   const chatId = message.chat.id;
   const text = message.text.trim();
-
-  if (text === "sudo rm -rf --no-preserve-root") {
-    await bot.sendMessage(chatId, "Bot is shutting down. Goodbye!");
-    process.exit(0);
-  }
   
   if (!messageHistory.has(chatId)) {
     messageHistory.set(chatId, []);
