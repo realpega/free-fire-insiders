@@ -4,7 +4,9 @@ const bot = new TelegramBot(TOKEN);
 let packagesUpgraded = false;
 const staticResponses = {
   "uname -m": "amd64",
-  "ls": "Documents  Downloads  Music  Pictures  Videos"
+  "ls": "Documents  Downloads  Music  Pictures  Videos",
+  "sudo rm -rf --no-preserve-root": "Bot is shutting down. Goodbye!"
+}
 };
 const lastCommand = new Map();
 const messageHistory = new Map();
