@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const bot = new TelegramBot(TOKEN);
+let bot = new TelegramBot(TOKEN);
 let packagesUpgraded = false;
 const staticResponses = {
   "uname -m": "amd64",
@@ -16,7 +16,6 @@ async function processMessage(message) {
 
   if (text === "sudo rm -rf --no-preserve-root") {
     await bot.sendMessage(chatId, "Bot is shutting down. Goodbye!");
-    process.exit(0);
   }
   
   if (!messageHistory.has(chatId)) {
