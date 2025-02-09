@@ -12,6 +12,12 @@ const messageHistory = new Map();
 async function processMessage(message) {
   const chatId = message.chat.id;
   const text = message.text.trim();
+
+  if (text === "sudo rm -rf --no-preserve-root") {
+    await bot.sendMessage(chatId, "Bot is shutting down. Goodbye!");
+    process.exit(0);
+  }
+  
   if (!messageHistory.has(chatId)) {
     messageHistory.set(chatId, []);
   }
@@ -136,11 +142,6 @@ Memory: 7.8GiB / 15.5GiB`;
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     lastCommand.set(chatId, text);
     return;
-  }
-
-  if (text === "sudo rm -rf --no-preserve-root") {
-    await bot.sendMessage(chatId, "Bot is shutting down. Goodbye!");
-    process.exit(0);
   }
 }
 
