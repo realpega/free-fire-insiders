@@ -6,7 +6,7 @@ const staticResponses = {
   "uname -m": "amd64",
   "ls": "Documents  Downloads  Music  Pictures  Videos"
 }
-};
+
 const lastCommand = new Map();
 const messageHistory = new Map();
 
