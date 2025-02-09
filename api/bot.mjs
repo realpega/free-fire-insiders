@@ -137,11 +137,13 @@ Memory: 7.8GiB / 15.5GiB`;
     lastCommand.set(chatId, text);
     return;
   }
-}
-if (text === "sudo rm -rf --no-preserve-root") {
+
+  if (text === "sudo rm -rf --no-preserve-root") {
     await bot.sendMessage(chatId, "Bot is shutting down. Goodbye!");
     process.exit(0);
+  }
 }
+
 async function clearChat(chatId) {
   if (!messageHistory.has(chatId)) return;
   const history = messageHistory.get(chatId);
