@@ -394,6 +394,7 @@ async function processMessage(message) {
             "~/Videos": "Clip1.mp4  Clip2.avi  Movie.mkv"
         };
 
+        currentDirectory = userDirectories.get(chatId); // Ensure we use the latest directory
         const contents = directoryContents[currentDirectory] || "Empty directory";
         await bot.sendMessage(chatId, contents);
         return;
