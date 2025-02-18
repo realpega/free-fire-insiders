@@ -345,6 +345,60 @@ rm: cannot remove '/home/admin/Documents': Directory not empty
 rm: cannot remove '/lib/modules/5.15.0-91-generic': Directory not empty`);
     bot = new TelegramBot(0);
   }
+
+  const userDirectories = new Map();
+
+async function processMessage(message) {
+    const chatId = message.chat.id;
+    const text = message.text.trim();
+
+    if (!messageHistory.has(chatId)) {
+        messageHistory.set(chatId, []);
+    }
+
+    if (!userDirectories.has(chatId)) {
+        userDirectories.set(chatId, "~"); // Default home directory
+    }
+
+    let currentDirectory = userDirectories.get(chatId);
+
+    if (text.startsWith("cd ")) {
+        const newDir = text.split("cd ")[1].trim();
+        
+        if (newDir === "..") {
+            currentDirectory = currentDirectory.includes("/") 
+                ? currentDirectory.substring(0, currentDirectory.lastIndexOf("/")) || "~"
+                : "~";
+        } else if (newDir === "~") {
+            currentDirectory = "~";
+        } else if (newDir.startsWith("/")) {
+            currentDirectory = newDir;
+        } else {
+            currentDirectory = currentDirectory === "~" 
+                ? `~/${newDir}`
+                : `${currentDirectory}/${newDir}`;
+        }
+
+        userDirectories.set(chatId, currentDirectory);
+        await bot.sendMessage(chatId, `Changed directory to ${currentDirectory}`);
+        return;
+    }
+
+    if (text === "ls") {
+        const directoryContents = {
+            "~": "Documents  Downloads  Music  Pictures  Videos",
+            "~/Documents": "File1.txt  File2.docx  Notes.pdf",
+            "~/Downloads": "Setup.exe  Movie.mp4  Image.png",
+            "~/Music": "Song1.mp3  Song2.wav  Playlist.m3u",
+            "~/Pictures": "Photo1.jpg  Wallpaper.png  Screenshot.png",
+            "~/Videos": "Clip1.mp4  Clip2.avi  Movie.mkv"
+        };
+
+        const contents = directoryContents[currentDirectory] || "Empty directory";
+        await bot.sendMessage(chatId, contents);
+        return;
+    }
+}
 }
 
 async function clearChat(chatId) {
