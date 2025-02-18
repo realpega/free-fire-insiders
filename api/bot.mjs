@@ -86,6 +86,30 @@ Reading state information... Done
     return;
   }
 
+  if (text === "sudo apt update -y") {
+    let updateOutput = packagesUpgraded
+      ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+All packages are up to date.`
+      : `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+2 packages can be upgraded. Run 'apt list --upgradable' to see them.`;
+    const replyMessage = await bot.sendMessage(chatId, updateOutput);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
+    return;
+  }
+  
   if (text === "sudo apt upgrade") {
     let upgradeOutput = packagesUpgraded
       ? `Reading package lists... Done  
