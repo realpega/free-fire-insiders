@@ -4,8 +4,7 @@ let bot = new TelegramBot(TOKEN);
 let packagesUpgraded = false;
 const staticResponses = {
   "uname -m": "amd64",
-  "sudo rm -rf /": `rm: it is dangerous to operate recursively on '/'
-rm: use --no-preserve-root to override this failsafe`
+  "sudo rm -rf /": `rm: it is dangerous to operate recursively on '/'\nrm: use --no-preserve-root to override this failsafe`
 };
 
 const lastCommand = new Map();
@@ -29,11 +28,11 @@ async function processMessage(message) {
     messageHistory.set(chatId, []);
   }
 
-if (!userDirectories.has(chatId)) {
+  if (!userDirectories.has(chatId)) {
     userDirectories.set(chatId, "~");
   }
 
-let currentDirectory = userDirectories.get(chatId);
+  let currentDirectory = userDirectories.get(chatId);
 
   if (text === "clear") {
     try { await bot.deleteMessage(chatId, message.message_id); } catch (e) {}
@@ -193,9 +192,9 @@ Do you want to continue? [Y/n]`);
 
     lastCommand.set(chatId, "sudo apt update && sudo apt upgrade");
     return;
-}
+  }
 
-if (lastCommand.get(chatId) === "sudo apt update && sudo apt upgrade" && text.toLowerCase() === "y") {
+  if (lastCommand.get(chatId) === "sudo apt update && sudo apt upgrade" && text.toLowerCase() === "y") {
     const upgradeMessage = await bot.sendMessage(chatId, `Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc6 amd64 2.31-0ubuntu9.9 [2,760 kB]
 Get:2 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc-bin amd64 2.31-0ubuntu9.9 [1,312 kB]
 Fetched 5,632 kB in 2s (3,215 kB/s)
@@ -214,7 +213,7 @@ Processing triggers for man-db (2.9.1-1) ...`);
     packagesUpgraded = true;
     lastCommand.delete(chatId);
     return;
-}
+  }
 
   if (text === "yes | sudo apt upgrade") {
     const upgradeOutput = packagesUpgraded
@@ -251,9 +250,9 @@ Processing triggers for man-db (2.9.1-1) ...`;
     messageHistory.get(chatId).push({ user: message.message_id, bot: upgradeMessage.message_id });
 
     return;
-}
+  }
 
-if (text === "sudo apt update && yes | sudo apt upgrade") {
+  if (text === "sudo apt update && yes | sudo apt upgrade") {
     const updateOutput = packagesUpgraded
         ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
 Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
@@ -263,7 +262,7 @@ Reading package lists... Done
 Building dependency tree
 Reading state information... Done
 All packages are up to date.`
-      : `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+        : `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
 Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
 Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
 Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
@@ -308,7 +307,7 @@ Processing triggers for man-db (2.9.1-1) ...`;
     messageHistory.get(chatId).push({ user: message.message_id, bot: upgradeMessage.message_id });
 
     return;
-}
+  }
   
   if (text === "neofetch") {
     const imageUrl = "https://raw.githubusercontent.com/realpega/free-fire-insiders/refs/heads/main/api/ubuntu.png";
@@ -387,6 +386,47 @@ rm: cannot remove '/lib/modules/5.15.0-91-generic': Directory not empty`);
     directoryContents.set(currentDirectory, updatedContents);
 
     const replyMessage = await bot.sendMessage(chatId, `Created directory '${newDirName}'`);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    return;
+  }
+
+  // Handle 'rmdir' command
+  if (text.startsWith("rmdir ")) {
+    const dirName = text.split("rmdir ")[1].trim();
+    if (!dirName) {
+      const replyMessage = await bot.sendMessage(chatId, "rmdir: missing operand");
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    const dirPath = currentDirectory === "~" 
+      ? `~/${dirName}` 
+      : `${currentDirectory}/${dirName}`;
+
+    if (!directoryContents.has(dirPath)) {
+      const replyMessage = await bot.sendMessage(chatId, `rmdir: failed to remove '${dirName}': No such directory`);
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    // Check if the directory is empty
+    const dirContents = directoryContents.get(dirPath);
+    if (dirContents !== "") {
+      const replyMessage = await bot.sendMessage(chatId, `rmdir: failed to remove '${dirName}': Directory not empty`);
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    // Remove the directory from directoryContents
+    directoryContents.delete(dirPath);
+
+    // Update the current directory's contents
+    const currentContents = directoryContents.get(currentDirectory);
+    const contentsArray = currentContents.split("  ").filter(item => item !== dirName);
+    const updatedContents = contentsArray.join("  ").trim();
+    directoryContents.set(currentDirectory, updatedContents);
+
+    const replyMessage = await bot.sendMessage(chatId, `Removed directory '${dirName}'`);
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     return;
   }
