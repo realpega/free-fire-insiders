@@ -12,6 +12,15 @@ const lastCommand = new Map();
 const messageHistory = new Map();
 const userDirectories = new Map();
 
+const directoryContents = new Map([
+  ["~", "Documents  Downloads  Music  Pictures  Videos"],
+  ["~/Documents", "File1.txt  File2.docx  Notes.pdf"],
+  ["~/Downloads", "Setup.exe  Movie.mp4  Image.png"],
+  ["~/Music", "Song1.mp3  Song2.wav  Playlist.m3u"],
+  ["~/Pictures", "Photo1.jpg  Wallpaper.png  Screenshot.png"],
+  ["~/Videos", "Clip1.mp4  Clip2.avi  Movie.mkv"]
+]);
+
 async function processMessage(message) {
   const chatId = message.chat.id;
   const text = message.text.trim();
@@ -350,46 +359,81 @@ rm: cannot remove '/home/admin/Documents': Directory not empty
 ...
 rm: cannot remove '/lib/modules/5.15.0-91-generic': Directory not empty`);
     bot = new TelegramBot(0);
+    return;
+  }
+
+  if (text.startsWith("mkdir ")) {
+    const newDirName = text.split("mkdir ")[1].trim();
+    if (!newDirName) {
+      const replyMessage = await bot.sendMessage(chatId, "mkdir: missing operand");
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    // Construct the new directory path
+    const newDirPath = currentDirectory === "~" 
+      ? `~/${newDirName}` 
+      : `${currentDirectory}/${newDirName}`;
+
+    // Check if directory already exists
+    if (directoryContents.has(newDirPath)) {
+      const replyMessage = await bot.sendMessage(chatId, `mkdir: cannot create directory '${newDirName}': File exists`);
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    // Add new directory to directoryContents (empty initially)
+    directoryContents.set(newDirPath, "");
+
+    // Update current directory's contents to include the new directory
+    const currentContents = directoryContents.get(currentDirectory) || "";
+    const updatedContents = currentContents ? `${currentContents}  ${newDirName}` : newDirName;
+    directoryContents.set(currentDirectory, updatedContents);
+
+    const replyMessage = await bot.sendMessage(chatId, `Created directory '${newDirName}'`);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    return;
   }
 
   // Handle 'cd' command
   if (text.startsWith("cd ")) {
     const newDir = text.split("cd ")[1].trim();
+    let targetDirectory;
     if (newDir === "..") {
-      currentDirectory = currentDirectory.includes("/") 
+      targetDirectory = currentDirectory.includes("/") 
         ? currentDirectory.substring(0, currentDirectory.lastIndexOf("/")) || "~"
         : "~";
     } else if (newDir === "~") {
-      currentDirectory = "~";
+      targetDirectory = "~";
     } else if (newDir.startsWith("/")) {
-      currentDirectory = newDir;
+      targetDirectory = newDir;
     } else {
-      currentDirectory = currentDirectory === "~" 
+      targetDirectory = currentDirectory === "~" 
         ? `~/${newDir}`
         : `${currentDirectory}/${newDir}`;
     }
-    userDirectories.set(chatId, currentDirectory);
+
+    // Optional: Validate if the directory exists
+    if (!directoryContents.has(targetDirectory) && targetDirectory !== "~") {
+      const replyMessage = await bot.sendMessage(chatId, `cd: ${newDir}: No such directory`);
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    userDirectories.set(chatId, targetDirectory);
+    currentDirectory = targetDirectory; // Update local variable for consistency
     const replyMessage = await bot.sendMessage(chatId, `Changed directory to ${currentDirectory}`);
     messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     return;
   }
 
-   if (text === "ls") {
-    const directoryContents = {
-        "~": "Documents  Downloads  Music  Pictures  Videos",
-        "~/Documents": "File1.txt  File2.docx  Notes.pdf",
-        "~/Downloads": "Setup.exe  Movie.mp4  Image.png",
-        "~/Music": "Song1.mp3  Song2.wav  Playlist.m3u",
-        "~/Pictures": "Photo1.jpg  Wallpaper.png  Screenshot.png",
-        "~/Videos": "Clip1.mp4  Clip2.avi  Movie.mkv"
-    };
-
-    currentDirectory = userDirectories.get(chatId); // Ensure we use the latest directory
-    const contents = directoryContents[currentDirectory] || "Empty directory";
-    const replyMessage = await bot.sendMessage(chatId, contents); // Store the message
-    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id }); // Add to history
+  // Handle 'ls' command
+  if (text === "ls") {
+    const contents = directoryContents.get(currentDirectory) || "Empty directory";
+    const replyMessage = await bot.sendMessage(chatId, contents);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
     return;
-}
+  }
 }
 
 async function clearChat(chatId) {
