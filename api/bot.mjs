@@ -31,7 +31,8 @@ async function processMessage(message) {
     return;
   }
 
-  if (await handleNeofetch(bot, chatId, messageId, messageHistory)) return;
+  // Delegate to module handlers
+  if (await handleNeofetch(bot, chatId, text, messageId, messageHistory)) return;
   if (await handleStatic(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
   if (await handleRmRf(bot, chatId, text, messageId, messageHistory)) return;
   if (await handleApt(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
@@ -58,4 +59,4 @@ export default async function handler(req, res) {
   } else {
     return res.status(405).send("Method Not Allowed");
   }
-}
+  }
