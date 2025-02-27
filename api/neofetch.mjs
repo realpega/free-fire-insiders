@@ -1,4 +1,8 @@
-export async function handleNeofetch(bot, chatId, messageId, messageHistory) {
+export async function handleNeofetch(bot, chatId, text, messageId, messageHistory) {
+  if (text !== "neofetch") {
+    return false; // Command not handled
+  }
+
   const imageUrl = "https://raw.githubusercontent.com/realpega/free-fire-insiders/refs/heads/main/api/ubuntu.png";
   const photoMessage = await bot.sendPhoto(chatId, imageUrl);
   const neofetchText = `root@freefireinsiders
