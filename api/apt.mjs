@@ -1,7 +1,6 @@
 let packagesUpgraded = false;
 
 export async function handleApt(bot, chatId, text, messageId, messageHistory, lastCommand) {
-  // Handle confirmation for "sudo apt upgrade"
   if (lastCommand.get(chatId) === "sudo apt upgrade" && text.toLowerCase() === "y") {
     if (!packagesUpgraded) {
       const replyMessage = await bot.sendMessage(
@@ -26,7 +25,6 @@ Processing triggers for man-db (2.9.1-1) ...`
     return true;
   }
 
-  // Handle confirmation for "sudo apt update && sudo apt upgrade"
   if (
     lastCommand.get(chatId) === "sudo apt update && sudo apt upgrade" &&
     text.toLowerCase() === "y"
@@ -52,7 +50,6 @@ Processing triggers for man-db (2.9.1-1) ...`
     return true;
   }
 
-  // apt list --upgradable
   if (text === "apt list --upgradable") {
     let replyText = !packagesUpgraded
       ? `Listing... Done
@@ -65,7 +62,6 @@ libc6/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]`
     return true;
   }
 
-  // sudo apt update
   if (text === "sudo apt update") {
     let updateOutput = packagesUpgraded
       ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
@@ -90,7 +86,6 @@ Reading state information... Done
     return true;
   }
 
-  // sudo apt update -y
   if (text === "sudo apt update -y") {
     let updateOutput = packagesUpgraded
       ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
@@ -115,7 +110,6 @@ Reading state information... Done
     return true;
   }
 
-  // sudo apt upgrade
   if (text === "sudo apt upgrade") {
     let upgradeOutput = packagesUpgraded
       ? `Reading package lists... Done  
@@ -138,7 +132,6 @@ Do you want to continue? [Y/n]`;
     return true;
   }
 
-  // sudo apt update && sudo apt upgrade
   if (text === "sudo apt update && sudo apt upgrade") {
     if (packagesUpgraded) {
       const updateMessage = await bot.sendMessage(
@@ -194,7 +187,6 @@ Do you want to continue? [Y/n]`
     return true;
   }
 
-  // yes | sudo apt upgrade
   if (text === "yes | sudo apt upgrade") {
     const upgradeOutput = packagesUpgraded
       ? `Reading package lists... Done  
@@ -229,7 +221,6 @@ Processing triggers for man-db (2.9.1-1) ...`;
     return true;
   }
 
-  // sudo apt update && yes | sudo apt upgrade
   if (text === "sudo apt update && yes | sudo apt upgrade") {
     const updateOutput = packagesUpgraded
       ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
@@ -285,5 +276,5 @@ Processing triggers for man-db (2.9.1-1) ...`;
     return true;
   }
 
-  return false; // Command not handled
+  return false;
 }
