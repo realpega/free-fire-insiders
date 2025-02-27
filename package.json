@@ -1,7 +1,7 @@
 {
   "name": "free-fire-insiders",
   "version": "1.0.0",
-  "description": "A Telegram bot that replies with predefined messages in groups. Kool!",
+  "description": "A Telegram bot that replies with predefined messages in groups.",
   "main": "api/bot.mjs",
   "type": "module",
   "scripts": {
