@@ -12,7 +12,7 @@ try {
   bot = new TelegramBot(TOKEN);
 } catch (error) {
   console.error("Failed to initialize bot:", error.message);
-  throw error; // This will crash the process and log in Vercel
+  throw error;
 }
 
 const lastCommand = new Map();
