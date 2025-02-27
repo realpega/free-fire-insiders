@@ -5,7 +5,15 @@ import { directoryContents, handleFilesystem } from "./filesystem.mjs";
 import { handleNeofetch } from "./neofetch.mjs";
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-let bot = new TelegramBot(TOKEN);
+let bot;
+
+try {
+  if (!TOKEN) throw new Error("TELEGRAM_BOT_TOKEN is not set in environment variables");
+  bot = new TelegramBot(TOKEN);
+} catch (error) {
+  console.error("Failed to initialize bot:", error.message);
+  throw error;
+}
 
 const lastCommand = new Map();
 const messageHistory = new Map();
@@ -24,27 +32,30 @@ async function processMessage(message) {
     userDirectories.set(chatId, "~");
   }
 
-  // Handle 'clear' command
-  if (text === "clear") {
-    try { await bot.deleteMessage(chatId, messageId); } catch (e) {}
-    await clearChat(chatId);
-    return;
-  }
+  try {
+    if (text === "clear") {
+      try { await bot.deleteMessage(chatId, messageId); } catch (e) { console.error("Error deleting message:", e.message); }
+      await clearChat(chatId);
+      return;
+    }
 
-  // Delegate to module handlers
-  if (await handleNeofetch(bot, chatId, text, messageId, messageHistory)) return;
-  if (await handleStatic(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
-  if (await handleRmRf(bot, chatId, text, messageId, messageHistory)) return;
-  if (await handleApt(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
-  if (await handleFilesystem(bot, chatId, text, messageId, messageHistory, userDirectories)) return;
+    if (await handleNeofetch(bot, chatId, text, messageId, messageHistory)) return;
+    if (await handleStatic(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
+    if (await handleRmRf(bot, chatId, text, messageId, messageHistory)) return;
+    if (await handleApt(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
+    if (await handleFilesystem(bot, chatId, text, messageId, messageHistory, userDirectories)) return;
+  
+  } catch (error) {
+    console.error(`Error processing message '${text}':`, error.message);
+  }
 }
 
 async function clearChat(chatId) {
   if (!messageHistory.has(chatId)) return;
   const history = messageHistory.get(chatId);
   for (const pair of history) {
-    try { await bot.deleteMessage(chatId, pair.bot); } catch (e) {}
-    try { await bot.deleteMessage(chatId, pair.user); } catch (e) {}
+    try { await bot.deleteMessage(chatId, pair.bot); } catch (e) { console.error("Error deleting bot message:", e.message); }
+    try { await bot.deleteMessage(chatId, pair.user); } catch (e) { console.error("Error deleting user message:", e.message); }
   }
   messageHistory.set(chatId, []);
 }
@@ -53,9 +64,15 @@ export default async function handler(req, res) {
   if (req.method === "POST") {
     const { message } = req.body;
     if (message && message.text) {
-      await processMessage(message);
+      try {
+        await processMessage(message);
+        return res.status(200).send("OK");
+      } catch (error) {
+        console.error("Handler error:", error.message);
+        return res.status(500).send("Internal Server Error");
+      }
     }
-    return res.status(200).send("OK");
+    return res.status(400).send("Bad Request: Missing message or text");
   } else {
     return res.status(405).send("Method Not Allowed");
   }
