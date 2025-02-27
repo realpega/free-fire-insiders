@@ -45,6 +45,9 @@ async function processMessage(message) {
     if (await handleApt(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
     if (await handleFilesystem(bot, chatId, text, messageId, messageHistory, userDirectories)) return;
 
+    // Optional: Handle unrecognized commands
+    // const replyMessage = await bot.sendMessage(chatId, `Command '${text}' not recognized`);
+    // messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
   } catch (error) {
     console.error(`Error processing message '${text}':`, error.message);
     // Optionally send an error response to the user
