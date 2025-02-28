@@ -4,8 +4,6 @@ import { handleApt } from "./apt.mjs";
 import { directoryContents, handleFilesystem } from "./filesystem.mjs";
 import { handleNeofetch } from "./neofetch.mjs";
 
-//hi
-
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 let bot;
 
@@ -38,22 +36,22 @@ async function processMessage(message) {
     if (text === "clear") {
       try { await bot.deleteMessage(chatId, messageId); } catch (e) { console.error("Error deleting message:", e.message); }
       await clearChat(chatId);
+      lastCommand.set(chatId, text); // Set lastCommand for consistency
       return;
     }
 
-    if (await handleNeofetch(bot, chatId, text, messageId, messageHistory)) return;
+    // Pass lastCommand to all handlers
+    if (await handleNeofetch(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
     if (await handleStatic(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
-    if (await handleRmRf(bot, chatId, text, messageId, messageHistory)) return;
+    if (await handleRmRf(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
     if (await handleApt(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
-    if (await handleFilesystem(bot, chatId, text, messageId, messageHistory, userDirectories)) return;
+    if (await handleFilesystem(bot, chatId, text, messageId, messageHistory, userDirectories, lastCommand)) return;
 
     // Optional: Handle unrecognized commands
     // const replyMessage = await bot.sendMessage(chatId, `Command '${text}' not recognized`);
     // messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
   } catch (error) {
     console.error(`Error processing message '${text}':`, error.message);
-    // Optionally send an error response to the user
-    // await bot.sendMessage(chatId, "An error occurred while processing your command.");
   }
 }
 
@@ -83,4 +81,4 @@ export default async function handler(req, res) {
   } else {
     return res.status(405).send("Method Not Allowed");
   }
-}
+                                                                                    }
