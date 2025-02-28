@@ -1,6 +1,6 @@
-export async function handleNeofetch(bot, chatId, text, messageId, messageHistory) {
+export async function handleNeofetch(bot, chatId, text, messageId, messageHistory, lastCommand) {
   if (text !== "neofetch") {
-    return false; // Command not handled
+    return false;
   }
 
   const imageUrl = "https://raw.githubusercontent.com/realpega/free-fire-insiders/refs/heads/main/api/ubuntu.png";
@@ -26,5 +26,6 @@ Memory: 7.8GiB / 15.5GiB`;
   const replyMessage = await bot.sendMessage(chatId, neofetchText);
   messageHistory.get(chatId).push({ user: messageId, bot: photoMessage.message_id });
   messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
-  return true; // Indicates handled
+  lastCommand.set(chatId, text);
+  return true;
 }
