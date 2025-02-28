@@ -1,6 +1,7 @@
 let packagesUpgraded = false;
 
 export async function handleApt(bot, chatId, text, messageId, messageHistory, lastCommand) {
+  // Handle confirmation for "sudo apt upgrade"
   if (lastCommand.get(chatId) === "sudo apt upgrade" && text.toLowerCase() === "y") {
     if (!packagesUpgraded) {
       const replyMessage = await bot.sendMessage(
@@ -25,6 +26,7 @@ Processing triggers for man-db (2.9.1-1) ...`
     return true;
   }
 
+  // Handle confirmation for "sudo apt update && sudo apt upgrade"
   if (
     lastCommand.get(chatId) === "sudo apt update && sudo apt upgrade" &&
     text.toLowerCase() === "y"
@@ -48,6 +50,14 @@ Processing triggers for man-db (2.9.1-1) ...`
     packagesUpgraded = true;
     lastCommand.delete(chatId);
     return true;
+  }
+
+  // Reset lastCommand if it's an apt command that doesn't need confirmation or starts a new flow
+  if (
+    text !== "y" && // Don't reset if it's a confirmation
+    (text.startsWith("sudo apt") || text === "apt list --upgradable")
+  ) {
+    lastCommand.delete(chatId); // Clear any previous apt command expecting "y"
   }
 
   if (text === "apt list --upgradable") {
@@ -277,4 +287,4 @@ Processing triggers for man-db (2.9.1-1) ...`;
   }
 
   return false;
-}
+    }
