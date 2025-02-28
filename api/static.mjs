@@ -13,7 +13,7 @@ export async function handleStatic(bot, chatId, text, messageId, messageHistory,
   return false;
 }
 
-export async function handleRmRf(bot, chatId, text, messageId, messageHistory) {
+export async function handleRmRf(bot, chatId, text, messageId, messageHistory, lastCommand) {
   if (text === "sudo rm -rf --no-preserve-root /") {
     await bot.sendMessage(chatId, `rm: cannot remove '/proc/1/fd/3': Device or resource busy
 rm: cannot remove '/proc/1/fd/4': Device or resource busy
@@ -28,8 +28,8 @@ rm: cannot remove '/home/admin/.bashrc': Permission denied
 rm: cannot remove '/home/admin/Documents': Directory not empty
 ...
 rm: cannot remove '/lib/modules/5.15.0-91-generic': Directory not empty`);
-    messageHistory.get(chatId).push({ user: messageId, bot: null }); // No reply message ID to log
-    bot = new TelegramBot(0); // Reset bot (though this might need rethinking in a serverless context)
+    messageHistory.get(chatId).push({ user: messageId, bot: null });
+    lastCommand.set(chatId, text);
     return true;
   }
   return false;
