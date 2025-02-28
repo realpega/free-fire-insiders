@@ -7,7 +7,7 @@ export const directoryContents = new Map([
   ["~/Videos", "Clip1.mp4  Clip2.avi  Movie.mkv"]
 ]);
 
-export async function handleFilesystem(bot, chatId, text, messageId, messageHistory, userDirectories) {
+export async function handleFilesystem(bot, chatId, text, messageId, messageHistory, userDirectories, lastCommand) {
   let currentDirectory = userDirectories.get(chatId);
 
   if (text.startsWith("mkdir ")) {
@@ -15,6 +15,7 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
     if (!newDirName) {
       const replyMessage = await bot.sendMessage(chatId, "mkdir: missing operand");
       messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+      lastCommand.set(chatId, text);
       return true;
     }
 
@@ -25,6 +26,7 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
     if (directoryContents.has(newDirPath)) {
       const replyMessage = await bot.sendMessage(chatId, `mkdir: cannot create directory '${newDirName}': File exists`);
       messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+      lastCommand.set(chatId, text);
       return true;
     }
 
@@ -35,6 +37,7 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
 
     const replyMessage = await bot.sendMessage(chatId, `Created directory '${newDirName}'`);
     messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
     return true;
   }
 
@@ -43,6 +46,7 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
     if (!dirName) {
       const replyMessage = await bot.sendMessage(chatId, "rmdir: missing operand");
       messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+      lastCommand.set(chatId, text);
       return true;
     }
 
@@ -53,6 +57,7 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
     if (!directoryContents.has(dirPath)) {
       const replyMessage = await bot.sendMessage(chatId, `rmdir: failed to remove '${dirName}': No such directory`);
       messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+      lastCommand.set(chatId, text);
       return true;
     }
 
@@ -60,6 +65,7 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
     if (dirContents !== "") {
       const replyMessage = await bot.sendMessage(chatId, `rmdir: failed to remove '${dirName}': Directory not empty`);
       messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+      lastCommand.set(chatId, text);
       return true;
     }
 
@@ -71,6 +77,7 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
 
     const replyMessage = await bot.sendMessage(chatId, `Removed directory '${dirName}'`);
     messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
     return true;
   }
 
@@ -94,12 +101,14 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
     if (!directoryContents.has(targetDirectory) && targetDirectory !== "~") {
       const replyMessage = await bot.sendMessage(chatId, `cd: ${newDir}: No such directory`);
       messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+      lastCommand.set(chatId, text);
       return true;
     }
 
     userDirectories.set(chatId, targetDirectory);
     const replyMessage = await bot.sendMessage(chatId, `Changed directory to ${targetDirectory}`);
     messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
     return true;
   }
 
@@ -107,8 +116,9 @@ export async function handleFilesystem(bot, chatId, text, messageId, messageHist
     const contents = directoryContents.get(currentDirectory) || "Empty directory";
     const replyMessage = await bot.sendMessage(chatId, contents);
     messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
     return true;
   }
 
   return false;
-}
+                                                 }
