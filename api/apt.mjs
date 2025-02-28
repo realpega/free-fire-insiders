@@ -1,7 +1,6 @@
 let packagesUpgraded = false;
 
 export async function handleApt(bot, chatId, text, messageId, messageHistory, lastCommand) {
-
   if (lastCommand.get(chatId) === "sudo apt upgrade" && text.toLowerCase() === "y") {
     if (!packagesUpgraded) {
       const replyMessage = await bot.sendMessage(
@@ -26,7 +25,6 @@ Processing triggers for man-db (2.9.1-1) ...`
     return true;
   }
 
-  // Handle confirmation for "sudo apt update && sudo apt upgrade"
   if (
     lastCommand.get(chatId) === "sudo apt update && sudo apt upgrade" &&
     text.toLowerCase() === "y"
@@ -50,14 +48,6 @@ Processing triggers for man-db (2.9.1-1) ...`
     packagesUpgraded = true;
     lastCommand.delete(chatId);
     return true;
-  }
-
-  // Reset lastCommand if it's an apt command that doesn't need confirmation or starts a new flow
-  if (
-    text !== "y" && // Don't reset if it's a confirmation
-    (text.startsWith("sudo apt") || text === "apt list --upgradable")
-  ) {
-    lastCommand.delete(chatId); // Clear any previous apt command expecting "y"
   }
 
   if (text === "apt list --upgradable") {
@@ -164,6 +154,7 @@ All packages are up to date.`
       );
       messageHistory.get(chatId).push({ user: messageId, bot: updateMessage.message_id });
       messageHistory.get(chatId).push({ user: messageId, bot: upgradeMessage.message_id });
+      lastCommand.set(chatId, text); // Set lastCommand even if no confirmation needed
       return true;
     }
 
@@ -228,6 +219,7 @@ Processing triggers for man-db (2.9.1-1) ...`;
     if (!packagesUpgraded) packagesUpgraded = true;
     const upgradeMessage = await bot.sendMessage(chatId, upgradeOutput);
     messageHistory.get(chatId).push({ user: messageId, bot: upgradeMessage.message_id });
+    lastCommand.set(chatId, text);
     return true;
   }
 
@@ -277,14 +269,14 @@ Preparing to unpack .../libc-bin_2.31-0ubuntu9.9_amd64.deb ...
 Unpacking libc-bin (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
 Setting up libc-bin (2.31-0ubuntu9.9) ...
 Processing triggers for man-db (2.9.1-1) ...`;
-
     if (!packagesUpgraded) packagesUpgraded = true;
     const updateMessage = await bot.sendMessage(chatId, updateOutput);
     const upgradeMessage = await bot.sendMessage(chatId, upgradeOutput);
     messageHistory.get(chatId).push({ user: messageId, bot: updateMessage.message_id });
     messageHistory.get(chatId).push({ user: messageId, bot: upgradeMessage.message_id });
+    lastCommand.set(chatId, text);
     return true;
   }
 
   return false;
-    }
+      }
