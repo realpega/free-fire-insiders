@@ -1,7 +1,7 @@
 let packagesUpgraded = false;
 
 export async function handleApt(bot, chatId, text, messageId, messageHistory, lastCommand) {
-  // Handle confirmation for "sudo apt upgrade"
+
   if (lastCommand.get(chatId) === "sudo apt upgrade" && text.toLowerCase() === "y") {
     if (!packagesUpgraded) {
       const replyMessage = await bot.sendMessage(
