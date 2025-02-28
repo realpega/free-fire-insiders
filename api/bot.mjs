@@ -4,6 +4,8 @@ import { handleApt } from "./apt.mjs";
 import { directoryContents, handleFilesystem } from "./filesystem.mjs";
 import { handleNeofetch } from "./neofetch.mjs";
 
+//hi
+
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 let bot;
 
