@@ -1,29 +1,29 @@
 import TelegramBot from "node-telegram-bot-api";
-import { staticResponses, handleStatic, handleRmRf } from "./static.mjs";
-import { handleApt } from "./apt.mjs";
-import { directoryContents, handleFilesystem } from "./filesystem.mjs";
-import { handleNeofetch } from "./neofetch.mjs";
-
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-let bot;
-
-try {
-  if (!TOKEN) throw new Error("TELEGRAM_BOT_TOKEN is not set in environment variables");
-  bot = new TelegramBot(TOKEN);
-} catch (error) {
-  console.error("Failed to initialize bot:", error.message);
-  throw error;
-}
+let bot = new TelegramBot(TOKEN);
+let packagesUpgraded = false;
+const staticResponses = {
+  "uname -m": "amd64",
+  "sudo rm -rf /": `rm: it is dangerous to operate recursively on '/'\nrm: use --no-preserve-root to override this failsafe`
+};
 
 const lastCommand = new Map();
 const messageHistory = new Map();
 const userDirectories = new Map();
 
+const directoryContents = new Map([
+  ["~", "Documents  Downloads  Music  Pictures  Videos"],
+  ["~/Documents", "File1.txt  File2.docx  Notes.pdf"],
+  ["~/Downloads", "Setup.exe  Movie.mp4  Image.png"],
+  ["~/Music", "Song1.mp3  Song2.wav  Playlist.m3u"],
+  ["~/Pictures", "Photo1.jpg  Wallpaper.png  Screenshot.png"],
+  ["~/Videos", "Clip1.mp4  Clip2.avi  Movie.mkv"]
+]);
+
 async function processMessage(message) {
   const chatId = message.chat.id;
   const text = message.text.trim();
-  const messageId = message.message_id;
-
+  
   if (!messageHistory.has(chatId)) {
     messageHistory.set(chatId, []);
   }
@@ -32,26 +32,440 @@ async function processMessage(message) {
     userDirectories.set(chatId, "~");
   }
 
-  try {
-    if (text === "clear") {
-      try { await bot.deleteMessage(chatId, messageId); } catch (e) { console.error("Error deleting message:", e.message); }
-      await clearChat(chatId);
-      lastCommand.set(chatId, text); // Set lastCommand for consistency
+  let currentDirectory = userDirectories.get(chatId);
+
+  if (text === "clear") {
+    try { await bot.deleteMessage(chatId, message.message_id); } catch (e) {}
+    await clearChat(chatId);
+    return;
+  }
+
+  if (lastCommand.get(chatId) === "sudo apt upgrade" && text.toLowerCase() === "y") {
+    if (!packagesUpgraded) {
+      const replyMessage = await bot.sendMessage(
+        chatId,
+        `Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc6 amd64 2.31-0ubuntu9.9 [2,760 kB]
+Get:2 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc-bin amd64 2.31-0ubuntu9.9 [1,312 kB]
+Fetched 5,632 kB in 2s (3,215 kB/s)
+Preconfiguring packages ...
+(Reading database ... 210384 files and directories currently installed.)
+Preparing to unpack .../libc6_2.31-0ubuntu9.9_amd64.deb ...
+Unpacking libc6:amd64 (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
+Setting up libc6:amd64 (2.31-0ubuntu9.9) ...
+Preparing to unpack .../libc-bin_2.31-0ubuntu9.9_amd64.deb ...
+Unpacking libc-bin (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
+Setting up libc-bin (2.31-0ubuntu9.9) ...
+Processing triggers for man-db (2.9.1-1) ...`
+      );
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      packagesUpgraded = true;
+    }
+    lastCommand.delete(chatId);
+    return;
+  }
+
+  if (text === "apt list --upgradable") {
+    let replyText = !packagesUpgraded
+      ? `Listing... Done
+libc-bin/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]
+libc6/focal-updates 2.31-0ubuntu9.9 amd64 [upgradable from: 2.31-0ubuntu9.8]`
+      : "Listing... Done";
+    const replyMessage = await bot.sendMessage(chatId, replyText);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
+    return;
+  }
+
+  if (text === "sudo apt update") {
+    let updateOutput = packagesUpgraded
+      ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+All packages are up to date.`
+      : `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+2 packages can be upgraded. Run 'apt list --upgradable' to see them.`;
+    const replyMessage = await bot.sendMessage(chatId, updateOutput);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
+    return;
+  }
+
+  if (text === "sudo apt update -y") {
+    let updateOutput = packagesUpgraded
+      ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+All packages are up to date.`
+      : `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+2 packages can be upgraded. Run 'apt list --upgradable' to see them.`;
+    const replyMessage = await bot.sendMessage(chatId, updateOutput);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
+    return;
+  }
+  
+  if (text === "sudo apt upgrade") {
+    let upgradeOutput = packagesUpgraded
+      ? `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+All packages are up to date.`
+      : `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+Calculating upgrade... Done  
+The following packages will be upgraded:  
+  libc-bin libc6  
+2 upgraded, 0 newly installed, 0 to remove, and 0 not upgraded.  
+Need to get 5,632 kB of archives.  
+After this operation, 1,024 KB of additional disk space will be used.  
+Do you want to continue? [Y/n]`;
+    const replyMessage = await bot.sendMessage(chatId, upgradeOutput);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
+    return;
+  }
+
+  if (text === "sudo apt update && sudo apt upgrade") {
+    if (packagesUpgraded) {
+        const updateMessage = await bot.sendMessage(chatId, `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+All packages are up to date.`);
+        
+        const upgradeMessage = await bot.sendMessage(chatId, `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+All packages are up to date.`);
+        
+        messageHistory.get(chatId).push({ user: message.message_id, bot: updateMessage.message_id });
+        messageHistory.get(chatId).push({ user: message.message_id, bot: upgradeMessage.message_id });
+        return;
+    }
+
+    const updateMessage = await bot.sendMessage(chatId, `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+2 packages can be upgraded. Run 'apt list --upgradable' to see them.`);
+
+    const promptMessage = await bot.sendMessage(chatId, `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+Calculating upgrade... Done  
+The following packages will be upgraded:  
+  libc-bin libc6  
+2 upgraded, 0 newly installed, 0 to remove, and 0 not upgraded.  
+Need to get 5,632 kB of archives.  
+After this operation, 1,024 KB of additional disk space will be used.  
+Do you want to continue? [Y/n]`);
+
+    messageHistory.get(chatId).push({ user: message.message_id, bot: updateMessage.message_id });
+    messageHistory.get(chatId).push({ user: message.message_id, bot: promptMessage.message_id });
+
+    lastCommand.set(chatId, "sudo apt update && sudo apt upgrade");
+    return;
+  }
+
+  if (lastCommand.get(chatId) === "sudo apt update && sudo apt upgrade" && text.toLowerCase() === "y") {
+    const upgradeMessage = await bot.sendMessage(chatId, `Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc6 amd64 2.31-0ubuntu9.9 [2,760 kB]
+Get:2 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc-bin amd64 2.31-0ubuntu9.9 [1,312 kB]
+Fetched 5,632 kB in 2s (3,215 kB/s)
+Preconfiguring packages ...
+(Reading database ... 210384 files and directories currently installed.)
+Preparing to unpack .../libc6_2.31-0ubuntu9.9_amd64.deb ...
+Unpacking libc6:amd64 (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
+Setting up libc6:amd64 (2.31-0ubuntu9.9) ...
+Preparing to unpack .../libc-bin_2.31-0ubuntu9.9_amd64.deb ...
+Unpacking libc-bin (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
+Setting up libc-bin (2.31-0ubuntu9.9) ...
+Processing triggers for man-db (2.9.1-1) ...`);
+
+    messageHistory.get(chatId).push({ user: message.message_id, bot: upgradeMessage.message_id });
+
+    packagesUpgraded = true;
+    lastCommand.delete(chatId);
+    return;
+  }
+
+  if (text === "yes | sudo apt upgrade") {
+    const upgradeOutput = packagesUpgraded
+        ? `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+All packages are up to date.`
+        : `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+Calculating upgrade... Done  
+The following packages will be upgraded:  
+  libc-bin libc6  
+2 upgraded, 0 newly installed, 0 to remove, and 0 not upgraded.  
+Need to get 5,632 kB of archives.  
+After this operation, 1,024 KB of additional disk space will be used.  
+Do you want to continue? [Y/n]
+Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc6 amd64 2.31-0ubuntu9.9 [2,760 kB]
+Get:2 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc-bin amd64 2.31-0ubuntu9.9 [1,312 kB]
+Fetched 5,632 kB in 2s (3,215 kB/s)
+Preconfiguring packages ...
+(Reading database ... 210384 files and directories currently installed.)
+Preparing to unpack .../libc6_2.31-0ubuntu9.9_amd64.deb ...
+Unpacking libc6:amd64 (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
+Setting up libc6:amd64 (2.31-0ubuntu9.9) ...
+Preparing to unpack .../libc-bin_2.31-0ubuntu9.9_amd64.deb ...
+Unpacking libc-bin (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
+Setting up libc-bin (2.31-0ubuntu9.9) ...
+Processing triggers for man-db (2.9.1-1) ...`;
+
+    if (!packagesUpgraded) packagesUpgraded = true;
+
+    const upgradeMessage = await bot.sendMessage(chatId, upgradeOutput);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: upgradeMessage.message_id });
+
+    return;
+  }
+
+  if (text === "sudo apt update && yes | sudo apt upgrade") {
+    const updateOutput = packagesUpgraded
+        ? `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+All packages are up to date.`
+        : `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://archive.ubuntu.com/ubuntu focal-backports InRelease [114 kB]
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+2 packages can be upgraded. Run 'apt list --upgradable' to see them.`;
+
+    const upgradeOutput = packagesUpgraded
+        ? `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+All packages are up to date.`
+        : `Reading package lists... Done  
+Building dependency tree       
+Reading state information... Done  
+Calculating upgrade... Done  
+The following packages will be upgraded:  
+  libc-bin libc6  
+2 upgraded, 0 newly installed, 0 to remove, and 0 not upgraded.  
+Need to get 5,632 kB of archives.  
+After this operation, 1,024 KB of additional disk space will be used.  
+Do you want to continue? [Y/n]
+Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc6 amd64 2.31-0ubuntu9.9 [2,760 kB]
+Get:2 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc-bin amd64 2.31-0ubuntu9.9 [1,312 kB]
+Fetched 5,632 kB in 2s (3,215 kB/s)
+Preconfiguring packages ...
+(Reading database ... 210384 files and directories currently installed.)
+Preparing to unpack .../libc6_2.31-0ubuntu9.9_amd64.deb ...
+Unpacking libc6:amd64 (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
+Setting up libc6:amd64 (2.31-0ubuntu9.9) ...
+Preparing to unpack .../libc-bin_2.31-0ubuntu9.9_amd64.deb ...
+Unpacking libc-bin (2.31-0ubuntu9.9) over (2.31-0ubuntu9.8) ...
+Setting up libc-bin (2.31-0ubuntu9.9) ...
+Processing triggers for man-db (2.9.1-1) ...`;
+
+    if (!packagesUpgraded) packagesUpgraded = true;
+
+    const updateMessage = await bot.sendMessage(chatId, updateOutput);
+    const upgradeMessage = await bot.sendMessage(chatId, upgradeOutput);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: updateMessage.message_id });
+    messageHistory.get(chatId).push({ user: message.message_id, bot: upgradeMessage.message_id });
+
+    return;
+  }
+  
+  if (text === "neofetch") {
+    const imageUrl = "https://raw.githubusercontent.com/realpega/free-fire-insiders/refs/heads/main/api/ubuntu.png";
+    const photoMessage = await bot.sendPhoto(chatId, imageUrl);
+    const neofetchText = `root@freefireinsiders
+---------------- 
+OS: Ubuntu 20.04.6 LTS x86_64  
+Host: HP Pavilion Gaming Laptop 15-ec2150AX  
+Kernel: 5.15.0-91-generic  
+Uptime: 5 hours, 42 mins  
+Packages: 1982 (dpkg), 14 (snap)  
+Shell: bash 5.0.17  
+Resolution: 1920x1080  
+DE: GNOME 3.36.9  
+WM: Mutter  
+WM Theme: Yaru  
+Theme: Yaru-dark [GTK2/3]  
+Icons: Yaru [GTK2/3]  
+Terminal: gnome-terminal  
+CPU: AMD Ryzen 5 5600H (12) @ 4.20GHz  
+GPU: NVIDIA GeForce GTX 1650 Mobile / AMD Radeon Vega 7  
+Memory: 7.8GiB / 15.5GiB`;
+    const replyMessage = await bot.sendMessage(chatId, neofetchText);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: photoMessage.message_id });
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    return;
+  }
+
+  if (staticResponses[text]) {
+    const replyMessage = await bot.sendMessage(chatId, staticResponses[text]);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    lastCommand.set(chatId, text);
+    return;
+  }
+
+  if (text === "sudo rm -rf --no-preserve-root /") {
+    await bot.sendMessage(chatId, `rm: cannot remove '/proc/1/fd/3': Device or resource busy
+rm: cannot remove '/proc/1/fd/4': Device or resource busy
+rm: cannot remove '/proc/1/task/1/environ': Operation not permitted
+rm: cannot remove '/sys/kernel/security': Permission denied
+rm: cannot remove '/sys/firmware': Permission denied
+rm: cannot remove '/dev/pts/0': Device or resource busy
+rm: cannot remove '/boot/grub': Directory not empty
+rm: cannot remove '/etc/shadow': Permission denied
+rm: cannot remove '/etc/sudoers': Permission denied
+rm: cannot remove '/home/admin/.bashrc': Permission denied
+rm: cannot remove '/home/admin/Documents': Directory not empty
+...
+rm: cannot remove '/lib/modules/5.15.0-91-generic': Directory not empty`);
+    bot = new TelegramBot(0);
+    return;
+  }
+
+  if (text.startsWith("mkdir ")) {
+    const newDirName = text.split("mkdir ")[1].trim();
+    if (!newDirName) {
+      const replyMessage = await bot.sendMessage(chatId, "mkdir: missing operand");
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
       return;
     }
 
-    // Pass lastCommand to all handlers
-    if (await handleNeofetch(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
-    if (await handleStatic(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
-    if (await handleRmRf(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
-    if (await handleApt(bot, chatId, text, messageId, messageHistory, lastCommand)) return;
-    if (await handleFilesystem(bot, chatId, text, messageId, messageHistory, userDirectories, lastCommand)) return;
+    const newDirPath = currentDirectory === "~" 
+      ? `~/${newDirName}` 
+      : `${currentDirectory}/${newDirName}`;
 
-    // Optional: Handle unrecognized commands
-    // const replyMessage = await bot.sendMessage(chatId, `Command '${text}' not recognized`);
-    // messageHistory.get(chatId).push({ user: messageId, bot: replyMessage.message_id });
-  } catch (error) {
-    console.error(`Error processing message '${text}':`, error.message);
+    if (directoryContents.has(newDirPath)) {
+      const replyMessage = await bot.sendMessage(chatId, `mkdir: cannot create directory '${newDirName}': File exists`);
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    directoryContents.set(newDirPath, "");
+
+    const currentContents = directoryContents.get(currentDirectory) || "";
+    const updatedContents = currentContents ? `${currentContents}  ${newDirName}` : newDirName;
+    directoryContents.set(currentDirectory, updatedContents);
+
+    const replyMessage = await bot.sendMessage(chatId, `Created directory '${newDirName}'`);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    return;
+  }
+
+  // Handle 'rmdir' command
+  if (text.startsWith("rmdir ")) {
+    const dirName = text.split("rmdir ")[1].trim();
+    if (!dirName) {
+      const replyMessage = await bot.sendMessage(chatId, "rmdir: missing operand");
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    const dirPath = currentDirectory === "~" 
+      ? `~/${dirName}` 
+      : `${currentDirectory}/${dirName}`;
+
+    if (!directoryContents.has(dirPath)) {
+      const replyMessage = await bot.sendMessage(chatId, `rmdir: failed to remove '${dirName}': No such directory`);
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    // Check if the directory is empty
+    const dirContents = directoryContents.get(dirPath);
+    if (dirContents !== "") {
+      const replyMessage = await bot.sendMessage(chatId, `rmdir: failed to remove '${dirName}': Directory not empty`);
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    // Remove the directory from directoryContents
+    directoryContents.delete(dirPath);
+
+    // Update the current directory's contents
+    const currentContents = directoryContents.get(currentDirectory);
+    const contentsArray = currentContents.split("  ").filter(item => item !== dirName);
+    const updatedContents = contentsArray.join("  ").trim();
+    directoryContents.set(currentDirectory, updatedContents);
+
+    const replyMessage = await bot.sendMessage(chatId, `Removed directory '${dirName}'`);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    return;
+  }
+
+  if (text.startsWith("cd ")) {
+    const newDir = text.split("cd ")[1].trim();
+    let targetDirectory;
+    if (newDir === "..") {
+      targetDirectory = currentDirectory.includes("/") 
+        ? currentDirectory.substring(0, currentDirectory.lastIndexOf("/")) || "~"
+        : "~";
+    } else if (newDir === "~") {
+      targetDirectory = "~";
+    } else if (newDir.startsWith("/")) {
+      targetDirectory = newDir;
+    } else {
+      targetDirectory = currentDirectory === "~" 
+        ? `~/${newDir}`
+        : `${currentDirectory}/${newDir}`;
+    }
+
+    if (!directoryContents.has(targetDirectory) && targetDirectory !== "~") {
+      const replyMessage = await bot.sendMessage(chatId, `cd: ${newDir}: No such directory`);
+      messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+      return;
+    }
+
+    userDirectories.set(chatId, targetDirectory);
+    currentDirectory = targetDirectory;
+    const replyMessage = await bot.sendMessage(chatId, `Changed directory to ${currentDirectory}`);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    return;
+  }
+
+  if (text === "ls") {
+    const contents = directoryContents.get(currentDirectory) || "Empty directory";
+    const replyMessage = await bot.sendMessage(chatId, contents);
+    messageHistory.get(chatId).push({ user: message.message_id, bot: replyMessage.message_id });
+    return;
   }
 }
 
@@ -59,8 +473,8 @@ async function clearChat(chatId) {
   if (!messageHistory.has(chatId)) return;
   const history = messageHistory.get(chatId);
   for (const pair of history) {
-    try { await bot.deleteMessage(chatId, pair.bot); } catch (e) { console.error("Error deleting bot message:", e.message); }
-    try { await bot.deleteMessage(chatId, pair.user); } catch (e) { console.error("Error deleting user message:", e.message); }
+    try { await bot.deleteMessage(chatId, pair.bot); } catch (e) {}
+    try { await bot.deleteMessage(chatId, pair.user); } catch (e) {}
   }
   messageHistory.set(chatId, []);
 }
@@ -69,16 +483,10 @@ export default async function handler(req, res) {
   if (req.method === "POST") {
     const { message } = req.body;
     if (message && message.text) {
-      try {
-        await processMessage(message);
-        return res.status(200).send("OK");
-      } catch (error) {
-        console.error("Handler error:", error.message);
-        return res.status(500).send("Internal Server Error");
-      }
+      await processMessage(message);
     }
-    return res.status(400).send("Bad Request: Missing message or text");
+    return res.status(200).send("OK");
   } else {
     return res.status(405).send("Method Not Allowed");
   }
-                                                                                    }
+}
